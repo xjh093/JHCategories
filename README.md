@@ -1,10 +1,9 @@
 # UIView-JHCategory
 
-## 1.Set view's Frame from a string.
-## 2.A quick method to set view's Property.
+* 1.Set view's Frame from a string.
+* 2.A quick method to set view's Property.
 
-
-
+---------------------------------------------------------------
 # 1.Set view's Frame from a string.
 ## example0: the beginning.
 ```objc
@@ -44,6 +43,6 @@ view1.frame = [self.view jhRectFromString:@"[x:2_w(0)-25,y:2_h(0)-25,w:50,h:50]"
 
 ## more methods, find yourself.
 
-
+--
 # 2.A quick method to set view's Property.
 
