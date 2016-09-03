@@ -64,7 +64,6 @@ JH_addToView_h(UIView)
 @end
 
 @interface UILabel (JHCategory)
-+ (UILabel *)jhLabel:(NSString *)frameStr text:(NSString *)text color:(id)color font:(NSString *)font align:(NSString *)align bgColor:(id)bgColor tag:(NSInteger)tag view:(UIView *)view addToView:(BOOL)flag; /**< color:str or obj,default is black, alin:0-left,1-center,2-right bgColor:str or obj,default is white, view:self.view*/
 
 JH_tag_h(UILabel)
 JH_text_h(UILabel)
@@ -128,7 +127,6 @@ JH_addToView_h(UITextView)
 @end
 
 @interface UIButton (JHCategory)
-+ (UIButton *)jhButton:(UIButtonType)type frame:(NSString *)frameStr title:(NSString *)title color:(id)color font:(NSString *)font bgColor:(id)bgColor radius:(CGFloat)radius target:(id)target selector:(NSString *)selector tag:(NSInteger)tag view:(UIView *)view addToView:(BOOL)flag; /**< type:default is 1,custom-0,system-1.*/
 
 JH_tag_h(UIButton)
 JH_frame_h(UIButton)
@@ -146,7 +144,6 @@ JH_addToView_h(UIButton)
 @end
 
 @interface UITableView (JHCategory)
-+ (UITableView *)jhTableView:(NSString *)frameStr style:(NSInteger)style target:(id)target view:(UIView *)view addToView:(BOOL)flag; /**< style:plain-0,group-1.*/
 
 JH_tag_h(UITableView)
 JH_frame_h(UITableView)
