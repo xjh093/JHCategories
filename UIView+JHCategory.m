@@ -5,7 +5,7 @@
 //  Created by HaoCold on 16/8/18.
 //  Copyright © 2016年 HaoCold. All rights reserved.
 //
-
+    
 #import "UIView+JHCategory.h"
 
 #define JH_bdColor_m(jhclass) \
@@ -14,6 +14,8 @@
     return ^id(id bdColor){ \
         if([bdColor isKindOfClass:[UIColor class]]){ \
             self.layer.borderColor = [bdColor CGColor]; \
+        }else if ([bdColor isKindOfClass:[NSString class]]){ \
+            self.layer.borderColor = [[UIColor jhColor:bdColor] CGColor]; \
         } \
         return self; \
     }; \
@@ -166,6 +168,17 @@
     }; \
 }
 
+#define JH_alpha_m(jhclass) \
+- (jhclass *(^)(id))jh_alpha{ \
+    JHLog(); \
+    return ^id(id alpha){ \
+        if ([alpha isKindOfClass:[NSNumber class]]) { \
+            self.alpha = [alpha floatValue]; \
+        } \
+        return self; \
+    }; \
+}
+
 @implementation UIView (JHCategory)
 
 - (void)setJh_x:(CGFloat)jh_x{
@@ -260,12 +273,31 @@
 
 JH_tag_m(UIView)
 JH_frame_m(UIView)
+JH_alpha_m(UIView)
 JH_bgColor_m(UIView)
 JH_bdColor_m(UIView)
 JH_bdWidth_m(UIView)
 JH_cnRadius_m(UIView)
 JH_mtBounds_m(UIView)
 JH_addToView_m(UIView)
+
++ (UIView *(^)())jh_view{
+    return ^id(){
+        UIView *view = [[UIView alloc] init];
+        return view;
+    };
+}
+
+- (void)jhAddTapEvent
+{
+    UITapGestureRecognizer *xTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hideKeyboard)];
+    [self addGestureRecognizer:xTap];
+}
+
+- (void)hideKeyboard
+{
+    [self endEditing:YES];
+}
 
 - (CGRect)jhRectFromString:(NSString *)frameStr
 {
@@ -300,8 +332,17 @@ JH_addToView_m(UIView)
         
         if (xArr.count == 1) // 10 针对常量的情况
         {
-            if ([self isPureInt:xArr[0]] || [self isPureFloat:xArr[0]]) {
-                return [xArr[0] floatValue];
+            NSString *str1 = xArr[0];
+            if ([str1 hasPrefix:@"W"]) { //W+10.0,W-10.0,W*10.0,W/10.0,
+                CGFloat W = [UIScreen mainScreen].bounds.size.width;
+                return [self jhWorH:W str:str1];
+            }
+            else if ([str1 hasPrefix:@"H"]){
+                CGFloat H = [UIScreen mainScreen].bounds.size.height;
+                return [self jhWorH:H str:str1];
+            }
+            else if ([self isPureInt:str1] || [self isPureFloat:str1]) {
+                return [str1 floatValue];
             }else{
                 return 0.0;
             }
@@ -321,14 +362,26 @@ JH_addToView_m(UIView)
                 [subStr2 integerValue] != 0 ||
                 [subStr2 floatValue] > 0.01)
             {
+                CGFloat secondValue = 0.0;
+                NSString *firstStr = xArr[0];
+                if ([firstStr hasPrefix:@"x"] || [firstStr hasPrefix:@"maxx"]) {
+                    CGFloat W = [UIScreen mainScreen].bounds.size.width;
+                    secondValue = (W/375.0)*[subStr floatValue];
+                }else if ([firstStr hasPrefix:@"y"] || [firstStr hasPrefix:@"maxy"]){
+                    CGFloat H = [UIScreen mainScreen].bounds.size.height;
+                    secondValue = (H/667.0)*[subStr floatValue];
+                }else{
+                    secondValue = [subStr2 floatValue];
+                }
+                
                 if ([subStr1 isEqualToString:@"+"]) {
-                    return firstValue + [subStr2 floatValue];
+                    return firstValue + secondValue;
                 }else if ([subStr1 isEqualToString:@"-"]) {
-                    return firstValue - [subStr2 floatValue];
+                    return firstValue - secondValue;
                 }else if ([subStr1 isEqualToString:@"*"]) {
-                    return firstValue * [subStr2 floatValue];
+                    return firstValue * secondValue;
                 }else if ([subStr1 isEqualToString:@"/"]) {
-                    return firstValue / [subStr2 floatValue];
+                    return firstValue / secondValue;
                 }else{
                     return firstValue; //只返回前面部分
                 }
@@ -339,6 +392,29 @@ JH_addToView_m(UIView)
             }
         }
         return 0.0;
+    }
+    return 0.0;
+}
+
+- (CGFloat)jhWorH:(CGFloat)wh str:(NSString *)str1
+{
+    if (str1.length == 1) {
+        return wh;
+    }
+    else if (str1.length > 2){
+        NSString *operation = [str1 substringWithRange:NSMakeRange(1, 1)];
+        NSString *value = [str1 substringFromIndex:2];
+        if ([self isPureInt:value] || [self isPureFloat:value]) {
+            if ([operation isEqualToString:@"+"]) {
+                return wh + [value floatValue];
+            }else if ([operation isEqualToString:@"-"]) {
+                return wh - [value floatValue];
+            }else if ([operation isEqualToString:@"*"]) {
+                return wh * [value floatValue];
+            }else if ([operation isEqualToString:@"/"]) {
+                return wh / [value floatValue];
+            }
+        }
     }
     return 0.0;
 }
@@ -559,21 +635,149 @@ JH_addToView_m(UIView)
     }
     return NO;
 }
+
+
 @end
 
 @implementation UILabel (JHCategory)
++ (UILabel *)jhLabel:(NSString *)frameStr text:(NSString *)text color:(id)color font:(NSString *)font align:(NSString *)align bgColor:(id)bgColor tag:(NSInteger)tag view:(UIView *)view addToView:(BOOL)flag
+{
+    UILabel *xLabel = [[UILabel alloc] init];
+    xLabel.textColor = [UIColor blackColor];
+    xLabel.backgroundColor = [UIColor whiteColor];
+    
+    xLabel.frame = [view jhRectFromString:frameStr];
+    xLabel.text = text;
+    if(color) xLabel.textColor = [UIColor jhColor:color];
+    xLabel.font = [UIFont jhFont:font];
+    xLabel.textAlignment = [align integerValue];
+    if(bgColor) xLabel.backgroundColor = [UIColor jhColor:bgColor];
+    xLabel.tag = tag;
+    
+    if (view && flag) [view addSubview:xLabel];
+    
+    return xLabel;
+}
+
++ (UILabel *(^)())jh_label{
+    return ^id(){
+        UILabel *label = [[UILabel alloc] init];
+        return label;
+    };
+}
+
 JH_tag_m(UILabel)
 JH_text_m(UILabel)
 JH_font_m(UILabel)
 JH_align_m(UILabel)
 JH_color_m(UILabel)
 JH_frame_m(UILabel)
+JH_alpha_m(UILabel)
 JH_bgColor_m(UILabel)
 JH_bdColor_m(UILabel)
 JH_bdWidth_m(UILabel)
 JH_cnRadius_m(UILabel)
 JH_mtBounds_m(UILabel)
 JH_addToView_m(UILabel)
+
+#if 0
+- (UILabel *(^)(id))jh_addToView{
+    JHLog();
+    return ^id(id view){
+        if ([view isKindOfClass:[UIView class]]) {
+            [view addSubview:self];
+        }
+        return self;
+    };
+}
+
+- (UILabel *(^)(id))jh_frame{
+    JHLog();
+    return ^id(id frame){
+        if ([frame isKindOfClass:[NSValue class]]) {
+            self.frame = [frame CGRectValue];
+        }else if ([frame isKindOfClass:[NSString class]]){
+            if ([frame hasPrefix:@"{"]) {
+                self.frame = CGRectFromString(frame);
+            }else if ([frame hasPrefix:@"["]){
+                self.frame = [self.superview jhRectFromString:frame];
+            }else{
+                self.frame = CGRectZero;
+            }
+        }
+        return self;
+    };
+}
+
+- (UILabel *(^)(id))jh_bgColor{
+    JHLog();
+    return  ^id(id color){
+        if ([color isKindOfClass:[UIColor class]]) {
+            self.backgroundColor = color;
+        }else if ([color isKindOfClass:[NSString class]]){
+            self.backgroundColor = [UIColor jhColor:color];
+        }
+        return self;
+    };
+}
+
+- (UILabel *(^)(id))jh_tag{
+    JHLog();
+    return ^id(id tag){
+        if ([tag isKindOfClass:[NSNumber class]]) {
+            self.tag = [tag integerValue];
+        }
+        return self;
+    };
+}
+
+- (UILabel *(^)(id))jh_text{
+    JHLog();
+    return ^id(id text){
+        if ([text isKindOfClass:[NSString class]]) {
+            self.text = text;
+        }
+        return self;
+    };
+}
+
+- (UILabel *(^)(id))jh_color{
+    JHLog();
+    return ^id(id color){
+        if ([color isKindOfClass:[UIColor class]]) {
+            self.textColor = color;
+        }else if ([color isKindOfClass:[NSString class]]){
+            self.textColor = [UIColor jhColor:color];
+        }
+        return self;
+    };
+}
+
+- (UILabel *(^)(id))jh_font{
+    JHLog();
+    return ^id(id font){
+        if ([font isKindOfClass:[UIFont class]]) {
+            self.font = font;
+        }else if ([font isKindOfClass:[NSString class]]){
+            self.font = [UIFont jhFont:font];
+        }
+        return self;
+    };
+}
+
+- (UILabel *(^)(id))jh_align{
+    JHLog();
+    return ^id(id align){
+        if ([align isKindOfClass:[NSNumber class]]) {
+            self.textAlignment = [align integerValue];
+        }
+        return self;
+    };
+}
+
+#endif
+
+
 
 - (UILabel *(^)(id))jh_lines{
     JHLog();
@@ -594,15 +798,51 @@ JH_addToView_m(UILabel)
         return self;
     };
 }
+
+@end
+
+@implementation UIImageView (JHCategory)
+
+JH_tag_m(UIImageView)
+JH_frame_m(UIImageView)
+JH_alpha_m(UIImageView)
+JH_bgColor_m(UIImageView)
+JH_bdColor_m(UIImageView)
+JH_bdWidth_m(UIImageView)
+JH_cnRadius_m(UIImageView)
+JH_mtBounds_m(UIImageView)
+JH_addToView_m(UIImageView)
+
++ (UIImageView *(^)())jh_imageView{
+    return ^id(){
+        UIImageView *imageView = [[UIImageView alloc] init];
+        return imageView;
+    };
+}
+
+- (UIImageView *(^)(id))jh_image{
+    JHLog();
+    return ^id(id image){
+        if ([image isKindOfClass:[NSString class]]) {
+            self.image = [UIImage imageNamed:image];
+        }else if ([image isKindOfClass:[UIImage class]]){
+            self.image = image;
+        }
+        return self;
+    };
+}
+
 @end
 
 @implementation UITextField (JHCategory)
+
 JH_tag_m(UITextField)
 JH_text_m(UITextField)
 JH_font_m(UITextField)
 JH_align_m(UITextField)
 JH_color_m(UITextField)
 JH_frame_m(UITextField)
+JH_alpha_m(UITextField)
 JH_bgColor_m(UITextField)
 JH_bdColor_m(UITextField)
 JH_bdWidth_m(UITextField)
@@ -610,6 +850,13 @@ JH_cnRadius_m(UITextField)
 JH_mtBounds_m(UITextField)
 JH_delegate_m(UITextField)
 JH_addToView_m(UITextField)
+
++ (UITextField *(^)())jh_textField{
+    return ^id(){
+        UITextField *textField = [[UITextField alloc] init];
+        return textField;
+    };
+}
 
 - (UITextField *(^)(id))jh_bdStyle{
     JHLog();
@@ -626,6 +873,20 @@ JH_addToView_m(UITextField)
         if ([pHolder isKindOfClass:[NSString class]]) {
             self.placeholder = pHolder;
         }
+        return self;
+    };
+}
+- (UITextField *(^)(id))jh_pHColor{
+    JHLog();
+    return ^id(id pHColor){
+        [self setValue:[UIColor jhColor:pHColor] forKeyPath:@"_placeholderLabel.textColor"];
+        return self;
+    };
+}
+- (UITextField *(^)(id))jh_pHFont{
+    JHLog();
+    return ^id(id pHFont){
+        [self setValue:[UIFont jhFont:pHFont] forKeyPath:@"_placeholderLabel.font"];
         return self;
     };
 }
@@ -674,15 +935,20 @@ JH_addToView_m(UITextField)
         return self;
     };
 }
+
+
+
 @end
 
 @implementation UITextView (JHCategory)
+
 JH_tag_m(UITextView)
 JH_text_m(UITextView)
 JH_font_m(UITextView)
 JH_align_m(UITextView)
 JH_color_m(UITextView)
 JH_frame_m(UITextView)
+JH_alpha_m(UITextView)
 JH_bgColor_m(UITextView)
 JH_bdColor_m(UITextView)
 JH_bdWidth_m(UITextView)
@@ -690,17 +956,129 @@ JH_cnRadius_m(UITextView)
 JH_mtBounds_m(UITextView)
 JH_delegate_m(UITextView)
 JH_addToView_m(UITextView)
+
++ (UITextView *(^)())jh_textView{
+    return ^id(){
+        UITextView *textView = [[UITextView alloc] init];
+        return textView;
+    };
+}
+
 @end
 
 @implementation UIButton (JHCategory)
++ (UIButton *)jhButton:(UIButtonType)type frame:(NSString *)frameStr title:(NSString *)title color:(id)color font:(NSString *)font bgColor:(id)bgColor radius:(CGFloat)radius target:(id)target selector:(NSString *)selector tag:(NSInteger)tag view:(UIView *)view addToView:(BOOL)flag
+{
+    UIButton *xButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    if (type == 0) xButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    xButton.backgroundColor = [UIColor lightGrayColor];
+    
+    xButton.frame = [view jhRectFromString:frameStr];
+    xButton.titleLabel.font = [UIFont jhFont:font];
+    xButton.layer.cornerRadius = radius;
+    xButton.tag = tag;
+    
+    if(bgColor) xButton.backgroundColor = [UIColor jhColor:bgColor];
+    if (title.length > 0) {
+        [xButton setTitle:title forState:UIControlStateNormal];
+    }
+    if (color) {
+        [xButton setTitleColor:[UIColor jhColor:color] forState:UIControlStateNormal];
+    }
+    if (target && selector.length > 0) {
+        [xButton addTarget:target
+                    action:NSSelectorFromString(selector)
+          forControlEvents:UIControlEventTouchUpInside];
+    }
+    
+    if (view && flag) [view addSubview:xButton];
+    
+    return xButton;
+}
+
+
+
 JH_tag_m(UIButton)
 JH_frame_m(UIButton)
+JH_alpha_m(UIButton)
 JH_bgColor_m(UIButton)
 JH_bdColor_m(UIButton)
 JH_bdWidth_m(UIButton)
 JH_cnRadius_m(UIButton)
 JH_mtBounds_m(UIButton)
 JH_addToView_m(UIButton)
+
++ (UIButton *(^)(id))jh_button{
+    return ^id(id type){
+        if ([type isKindOfClass:[NSNumber class]]) {
+            UIButton *button = [UIButton buttonWithType:[type integerValue]];
+            return button;
+        }
+        return nil;
+    };
+}
+
+#if 0
+- (UIButton *(^)(id))jh_addToView{
+    return ^id(id view){
+        if ([view isKindOfClass:[UIView class]]) {
+            [view addSubview:self];
+        }
+        return self;
+    };
+}
+
+- (UIButton *(^)(id))jh_frame{
+    JHLog();
+    return ^id(id frame){
+        if ([frame isKindOfClass:[NSValue class]]) {
+            self.frame = [frame CGRectValue];
+        }else if ([frame isKindOfClass:[NSString class]]){
+            if ([frame hasPrefix:@"{"]) {
+                self.frame = CGRectFromString(frame);
+            }else if ([frame hasPrefix:@"["]){
+                self.frame = [self.superview jhRectFromString:frame];
+            }else{
+                self.frame = CGRectZero;
+            }
+        }
+        return self;
+    };
+}
+
+- (UIButton *(^)(id))jh_bgColor{
+    JHLog();
+    return  ^id(id color){
+        if ([color isKindOfClass:[UIColor class]]) {
+            self.backgroundColor = color;
+        }else if ([color isKindOfClass:[NSString class]]){
+            self.backgroundColor = [UIColor jhColor:color];
+        }
+        return self;
+    };
+}
+
+- (UIButton *(^)(id))jh_tag{
+    JHLog();
+    return ^id(id tag){
+        if ([tag isKindOfClass:[NSNumber class]]) {
+            self.tag = [tag integerValue];
+        }
+        return self;
+    };
+}
+
+- (UIButton *(^)(id))jh_radius{
+    JHLog();
+    return ^id(id radius){
+        if ([radius isKindOfClass:[NSNumber class]]) {
+            self.layer.cornerRadius = [radius floatValue];
+        }
+        return self;
+    };
+}
+
+#endif
 
 - (UIButton *(^)(id))jh_title{
     JHLog();
@@ -736,11 +1114,23 @@ JH_addToView_m(UIButton)
     };
 }
 
+- (UIButton *(^)(id))jh_image{
+    JHLog();
+    return ^id(id image){
+        if ([image isKindOfClass:[NSString class]]) {
+            [self setImage:[UIImage imageNamed:image] forState:UIControlStateNormal];
+        }else if ([image isKindOfClass:[UIImage class]]){
+            [self setImage:image forState:UIControlStateNormal];
+        }
+        return self;
+    };
+}
+
 - (UIButton *(^)(id,id,id))jh_target_selector_event{
     JHLog();
     return ^id(id target,id selector,id event){
         if (([target isKindOfClass:[UIViewController class]] ||
-            [target isKindOfClass:[UIView class]]) &&
+             [target isKindOfClass:[UIView class]]) &&
             [selector isKindOfClass:[NSString class]] &&
             [event isKindOfClass:[NSNumber class]]) {
             [self addTarget:target action:NSSelectorFromString(selector) forControlEvents:[event unsignedIntegerValue]];
@@ -748,11 +1138,115 @@ JH_addToView_m(UIButton)
         return self;
     };
 }
+
+- (UIButton *(^)(id))jh_bgImage{
+    JHLog();
+    return ^id(id bgImage){
+        if ([bgImage isKindOfClass:[NSString class]]) {
+            [self setBackgroundImage:[UIImage imageNamed:bgImage] forState:UIControlStateNormal];
+        }else if ([bgImage isKindOfClass:[UIImage class]]){
+            [self setBackgroundImage:bgImage forState:UIControlStateNormal];
+        }
+        return self;
+    };
+}
+- (UIButton *(^)(id))jh_hTitle{
+    JHLog();
+    return ^id(id hTitle){
+        if ([hTitle isKindOfClass:[NSString class]]) {
+            [self setTitle:hTitle forState:UIControlStateHighlighted];
+        }
+        return self;
+    };
+}
+- (UIButton *(^)(id))jh_hColor{
+    JHLog();
+    return ^id(id hColor){
+        if ([hColor isKindOfClass:[UIColor class]]) {
+            [self setTitleColor:hColor forState:UIControlStateHighlighted];
+        }else if ([hColor isKindOfClass:[NSString class]]){
+            [self setTitleColor:[UIColor jhColor:hColor] forState:UIControlStateHighlighted];
+        }
+        return self;
+    };
+}
+- (UIButton *(^)(id))jh_hImage{
+    JHLog();
+    return ^id(id hImage){
+        if ([hImage isKindOfClass:[NSString class]]) {
+            [self setImage:[UIImage imageNamed:hImage] forState:UIControlStateHighlighted];
+        }else if ([hImage isKindOfClass:[UIImage class]]){
+            [self setImage:hImage forState:UIControlStateHighlighted];
+        }
+        return self;
+    };
+}
+- (UIButton *(^)(id))jh_sTitle{
+    JHLog();
+    return ^id(id sTitle){
+        if ([sTitle isKindOfClass:[NSString class]]) {
+            [self setTitle:sTitle forState:UIControlStateSelected];
+        }
+        return self;
+    };
+}
+- (UIButton *(^)(id))jh_sColor{
+    JHLog();
+    return ^id(id sColor){
+        if ([sColor isKindOfClass:[UIColor class]]) {
+            [self setTitleColor:sColor forState:UIControlStateSelected];
+        }else if ([sColor isKindOfClass:[NSString class]]){
+            [self setTitleColor:[UIColor jhColor:sColor] forState:UIControlStateSelected];
+        }
+        return self;
+    };
+}
+- (UIButton *(^)(id))jh_sImage{
+    JHLog();
+    return ^id(id sImage){
+        if ([sImage isKindOfClass:[NSString class]]) {
+            [self setImage:[UIImage imageNamed:sImage] forState:UIControlStateSelected];
+        }else if ([sImage isKindOfClass:[UIImage class]]){
+            [self setImage:sImage forState:UIControlStateSelected];
+        }
+        return self;
+    };
+}
+- (UIButton *(^)(id))jh_tintColor{
+    JHLog();
+    return ^id(id tintColor){
+        if ([tintColor isKindOfClass:[UIColor class]]) {
+            self.tintColor = tintColor;
+        }else if ([tintColor isKindOfClass:[NSString class]]){
+            self.tintColor = [UIColor jhColor:tintColor];
+        }
+        return self;
+    };
+}
+
 @end
 
 @implementation UITableView (JHCategory)
++ (UITableView *)jhTableView:(NSString *)frameStr style:(NSInteger)style target:(id)target view:(UIView *)view addToView:(BOOL)flag
+{
+    UITableView *xTableView = nil;
+    if (style == 0 || style == 1)
+        xTableView = [[UITableView alloc] initWithFrame:[view jhRectFromString:frameStr] style:style];
+    
+    xTableView.delegate = target;
+    xTableView.dataSource = target;
+    xTableView.tableFooterView = [[UIView alloc] init];
+    xTableView.showsVerticalScrollIndicator = NO;
+    xTableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+    
+    if (view && flag) [view addSubview:xTableView];
+    
+    return xTableView;
+}
+
 JH_tag_m(UITableView)
 JH_frame_m(UITableView)
+JH_alpha_m(UITableView)
 JH_bgColor_m(UITableView)
 JH_bdColor_m(UITableView)
 JH_bdWidth_m(UITableView)
@@ -760,11 +1254,24 @@ JH_cnRadius_m(UITableView)
 JH_mtBounds_m(UITableView)
 JH_delegate_m(UITableView)
 JH_addToView_m(UITableView)
+
++ (UITableView *(^)(id))jh_tableView{
+    return ^id(id type){
+        if ([type isKindOfClass:[NSNumber class]]) {
+            UITableView *tableView = [[UITableView alloc] initWithFrame:CGRectZero style:[type integerValue]];
+            return tableView;
+        }
+        return nil;
+    };
+}
+
 @end
 
 @implementation UIScrollView (JHCategory)
+
 JH_tag_m(UIScrollView)
 JH_frame_m(UIScrollView)
+JH_alpha_m(UIScrollView)
 JH_bgColor_m(UIScrollView)
 JH_bdColor_m(UIScrollView)
 JH_bdWidth_m(UIScrollView)
@@ -772,6 +1279,13 @@ JH_cnRadius_m(UIScrollView)
 JH_mtBounds_m(UIScrollView)
 JH_delegate_m(UIScrollView)
 JH_addToView_m(UIScrollView)
+
++ (UIScrollView *(^)())jh_scrollView{
+    return ^id(){
+        UIScrollView *scrollView = [[UIScrollView alloc] init];
+        return scrollView;
+    };
+}
 
 - (UIScrollView *(^)(id))jh_contentSize{
     JHLog();
@@ -791,3 +1305,214 @@ JH_addToView_m(UIScrollView)
     };
 }
 @end
+
+@implementation UIActivityIndicatorView (JHCategory)
++ (UIActivityIndicatorView *)jhAIViewInsuperView:(UIView *)superView showInfo:(NSString *)text
+{
+    UIActivityIndicatorView *xAIView = [[UIActivityIndicatorView alloc] init];
+    xAIView.activityIndicatorViewStyle = UIActivityIndicatorViewStyleWhiteLarge;//37 x 37
+    xAIView.backgroundColor = [UIColor blackColor];
+    xAIView.hidesWhenStopped = YES;
+    xAIView.layer.cornerRadius = 5;
+    
+    CGSize size = CGSizeZero;
+    if (text.length > 0){
+        size = [self jhAutoSize:text];
+    }
+    
+    CGFloat width = size.width < 80 ? 80 : size.width + 20;
+    CGFloat height = size.height > 20 ? 67 + size.height : 87;
+    
+    //宽度没有超过最大值时，保持 宽 与 高 相等
+    if (width < [UIScreen mainScreen].bounds.size.width - 100){
+        width = width < height ? height : width;
+    }
+    
+    //高度不超过最大高度
+    UIView *tView = nil;
+    BOOL flag = NO;
+    if (height > [UIScreen mainScreen].bounds.size.height - 100) {
+        height = [UIScreen mainScreen].bounds.size.height - 100;
+        
+        //超过时，添加scrollView
+        CGRect frame = CGRectMake(0, 57, width, height - 57);
+        UIScrollView *scrollView = [[UIScrollView alloc] init];
+        scrollView.jh_addToView(xAIView).jh_frame(JHFRAME(frame)).jh_contentSize(JHSIZE(CGSizeMake(width, size.height)));
+        flag = YES;
+    }else{
+        tView = xAIView;
+    }
+    
+    xAIView.frame = CGRectMake(0, 0, width, height);
+    
+    //NSLog(@"frame:%@",NSStringFromCGRect(xAIView.frame));
+    //有显示信息
+    if (text.length > 0)
+    {
+        //调整 控件 位置
+        UIView *view = xAIView.subviews[0];
+        view.jh_y = 10;
+        
+        CGFloat l1Y = CGRectGetMaxY(view.frame) + 10;
+        if (flag) {
+            l1Y = 0;
+        }
+        
+        UILabel *label = [[UILabel alloc] init];
+        label.jh_addToView(tView).jh_frame(JHFRAME(CGRectMake(0, l1Y, width, size.height))).jh_text(text).jh_color([UIColor whiteColor]).jh_lines(@(0)).jh_bgColor([UIColor clearColor]).jh_align(@(1));
+    }
+    
+    xAIView.center = superView.center;
+    
+    if (superView) {
+        [superView addSubview:xAIView];
+    }
+    return xAIView;
+}
+
++ (CGSize)jhAutoSize:(NSString *)text
+{
+    CGFloat width = [UIScreen mainScreen].bounds.size.width - 120;
+    
+    //单行
+    CGSize size1 = CGSizeMake(MAXFLOAT, 20);
+    CGFloat width1 = [text boundingRectWithSize:size1 options:NSStringDrawingUsesFontLeading | NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:[UIFont systemFontOfSize:17]} context:nil].size.width;
+    
+    if (width1 <= width)
+    {
+        return CGSizeMake(width1, 20);
+    }
+    
+    //多行
+    CGSize size2 = CGSizeMake(width, MAXFLOAT);
+    CGFloat height1 = [text boundingRectWithSize:size2 options:NSStringDrawingUsesFontLeading | NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:[UIFont systemFontOfSize:17]} context:nil].size.height;
+    return CGSizeMake(width, height1);
+}
+@end
+
+@implementation UIAlertController (JHCategory)
+
++ (UIAlertController *(^)(id,id,id))jh_alertCtrl{
+    return ^id(id title,id message,id type){
+        if ([type integerValue] == 0 || [type integerValue] == 1) {
+            UIAlertController *jhAlert = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:[type integerValue]];
+            return jhAlert;
+        }
+        return nil;
+    };
+}
+
+- (UIAlertController *(^)(id,jhAlertAction))jh_addNormalAction{
+    return ^id(id title,jhAlertAction jhBlock){
+        UIAlertAction *jhAction = [UIAlertAction actionWithTitle:title style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+            jhBlock();
+        }];
+        [self addAction:jhAction];
+        return self;
+    };
+}
+
+- (UIAlertController *(^)(id,jhAlertAction))jh_addCancelAction{
+    return ^id(id title,jhAlertAction jhBlock){
+        UIAlertAction *jhAction = [UIAlertAction actionWithTitle:title style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+            jhBlock();
+        }];
+        [self addAction:jhAction];
+        return self;
+    };
+}
+
+- (UIAlertController *(^)(id,jhAlertAction))jh_addDestructAction{
+    return ^id(id title,jhAlertAction jhBlock){
+        UIAlertAction *jhAction = [UIAlertAction actionWithTitle:title style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+            jhBlock();
+        }];
+        [self addAction:jhAction];
+        return self;
+    };
+}
+
+- (UIAlertController *(^)(id))jh_show{
+    return ^id(id vc){
+        if ([vc isKindOfClass:[UIViewController class]]) {
+            [vc presentViewController:self animated:YES completion:nil];
+        }
+        return self;
+    };
+}
+
+@end
+
+
+@implementation UISwitch (JHCategory)
+
+JH_tag_m(UISwitch)
+JH_frame_m(UISwitch)
+JH_alpha_m(UISwitch)
+JH_bgColor_m(UISwitch)
+JH_bdColor_m(UISwitch)
+JH_bdWidth_m(UISwitch)
+JH_cnRadius_m(UISwitch)
+JH_mtBounds_m(UISwitch)
+JH_addToView_m(UISwitch)
+
+- (UISwitch *(id))jh_tintColor{
+    JHLog();
+    return ^id(id tintColor){
+        if ([tintColor isKindOfClass:[UIColor class]]) {
+            self.tintColor = tintColor;
+        }else if ([tintColor isKindOfClass:[NSString class]]){
+            self.tintColor = [UIColor jhColor:tintColor];
+        }
+        return self;
+    };
+}
+
+- (UISwitch *(id))jh_onTintColor{
+    JHLog();
+    return ^id(id onTintColor){
+        if ([onTintColor isKindOfClass:[UIColor class]]) {
+            self.onTintColor = onTintColor;
+        }else if ([onTintColor isKindOfClass:[NSString class]]){
+            self.onTintColor = [UIColor jhColor:onTintColor];
+        }
+        return self;
+    };
+}
+- (UISwitch *(id))jh_thTintColor{
+    JHLog();
+    return ^id(id thTintColor){
+        if ([thTintColor isKindOfClass:[UIColor class]]) {
+            self.thumbTintColor = thTintColor;
+        }else if ([thTintColor isKindOfClass:[NSString class]]){
+            self.thumbTintColor = [UIColor jhColor:thTintColor];
+        }
+        return self;
+    };
+}
+- (UISwitch *(id))jh_onImage{
+    JHLog();
+    return ^id(id onImage){
+        if ([onImage isKindOfClass:[NSString class]]) {
+            self.onImage = [UIImage imageNamed:onImage];
+        }else if ([onImage isKindOfClass:[UIImage class]]){
+            self.onImage = onImage;
+        }
+        return self;
+    };
+}
+- (UISwitch *(id))jh_offImage{
+    JHLog();
+    return ^id(id offImage){
+        if ([offImage isKindOfClass:[NSString class]]) {
+            self.offImage = [UIImage imageNamed:offImage];
+        }else if ([offImage isKindOfClass:[UIImage class]]){
+            self.offImage = offImage;
+        }
+        return self;
+    };
+}
+
+@end
+
+
