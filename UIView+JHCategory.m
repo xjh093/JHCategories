@@ -640,24 +640,6 @@ JH_addToView_m(UIView)
 @end
 
 @implementation UILabel (JHCategory)
-+ (UILabel *)jhLabel:(NSString *)frameStr text:(NSString *)text color:(id)color font:(NSString *)font align:(NSString *)align bgColor:(id)bgColor tag:(NSInteger)tag view:(UIView *)view addToView:(BOOL)flag
-{
-    UILabel *xLabel = [[UILabel alloc] init];
-    xLabel.textColor = [UIColor blackColor];
-    xLabel.backgroundColor = [UIColor whiteColor];
-    
-    xLabel.frame = [view jhRectFromString:frameStr];
-    xLabel.text = text;
-    if(color) xLabel.textColor = [UIColor jhColor:color];
-    xLabel.font = [UIFont jhFont:font];
-    xLabel.textAlignment = [align integerValue];
-    if(bgColor) xLabel.backgroundColor = [UIColor jhColor:bgColor];
-    xLabel.tag = tag;
-    
-    if (view && flag) [view addSubview:xLabel];
-    
-    return xLabel;
-}
 
 + (UILabel *(^)())jh_label{
     return ^id(){
@@ -967,36 +949,6 @@ JH_addToView_m(UITextView)
 @end
 
 @implementation UIButton (JHCategory)
-+ (UIButton *)jhButton:(UIButtonType)type frame:(NSString *)frameStr title:(NSString *)title color:(id)color font:(NSString *)font bgColor:(id)bgColor radius:(CGFloat)radius target:(id)target selector:(NSString *)selector tag:(NSInteger)tag view:(UIView *)view addToView:(BOOL)flag
-{
-    UIButton *xButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    if (type == 0) xButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    xButton.backgroundColor = [UIColor lightGrayColor];
-    
-    xButton.frame = [view jhRectFromString:frameStr];
-    xButton.titleLabel.font = [UIFont jhFont:font];
-    xButton.layer.cornerRadius = radius;
-    xButton.tag = tag;
-    
-    if(bgColor) xButton.backgroundColor = [UIColor jhColor:bgColor];
-    if (title.length > 0) {
-        [xButton setTitle:title forState:UIControlStateNormal];
-    }
-    if (color) {
-        [xButton setTitleColor:[UIColor jhColor:color] forState:UIControlStateNormal];
-    }
-    if (target && selector.length > 0) {
-        [xButton addTarget:target
-                    action:NSSelectorFromString(selector)
-          forControlEvents:UIControlEventTouchUpInside];
-    }
-    
-    if (view && flag) [view addSubview:xButton];
-    
-    return xButton;
-}
-
-
 
 JH_tag_m(UIButton)
 JH_frame_m(UIButton)
@@ -1227,22 +1179,6 @@ JH_addToView_m(UIButton)
 @end
 
 @implementation UITableView (JHCategory)
-+ (UITableView *)jhTableView:(NSString *)frameStr style:(NSInteger)style target:(id)target view:(UIView *)view addToView:(BOOL)flag
-{
-    UITableView *xTableView = nil;
-    if (style == 0 || style == 1)
-        xTableView = [[UITableView alloc] initWithFrame:[view jhRectFromString:frameStr] style:style];
-    
-    xTableView.delegate = target;
-    xTableView.dataSource = target;
-    xTableView.tableFooterView = [[UIView alloc] init];
-    xTableView.showsVerticalScrollIndicator = NO;
-    xTableView.separatorStyle = UITableViewCellSeparatorStyleNone;
-    
-    if (view && flag) [view addSubview:xTableView];
-    
-    return xTableView;
-}
 
 JH_tag_m(UITableView)
 JH_frame_m(UITableView)
