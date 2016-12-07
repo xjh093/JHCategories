@@ -71,6 +71,8 @@ JH_addToView_h(UIView)
 
 - (CGRect)jhRectFromString:(NSString *)frameStr;  /**< frameStr:[x:value,y:value,w:value,h:value] */
 - (void)jhAddTapEvent; /**< 添加单击收回键盘事件*/
+- (void)jhAutoLayout; /**< 自动布局*/
+- (void)jhUpdateLayout; /**< 更新布局*/
 @end
 
 @interface UIColor (JHCategory)
