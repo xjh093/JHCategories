@@ -299,14 +299,65 @@ JH_addToView_m(UIView)
     [self endEditing:YES];
 }
 
+#pragma mark 自动布局
+- (void)jhAutoLayout
+{
+    //屏幕旋转通知
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(jhAutoLayoutSubview) name:UIApplicationDidChangeStatusBarOrientationNotification object:nil];
+}
+
+#pragma mark 布局子view
+- (void)jhAutoLayoutSubview
+{
+    //当前视图不在窗口
+    if (!self.window) {
+        //NSLog(@"1");
+        return;
+    }
+    if (self.subviews.count > 0) { //有子view
+        for (UIView *view in self.subviews) {
+            //NSLog(@"view tag:%@ - %p",@(view.tag),view);
+            NSString *frameString = objc_getAssociatedObject(view, "jhFrameString");
+            if (frameString.length > 0) {
+                CGRect frame = [view jhRectFromString:frameString];
+                if(!CGRectEqualToRect(CGRectZero, frame)) {
+                    view.frame = frame;
+                    [view jhAutoLayoutSubview];
+                }
+            }
+        }
+    }
+}
+
+#pragma mark 更新布局
+- (void)jhUpdateLayout
+{
+    [UIView animateWithDuration:0.25 animations:^{
+        [self jhAutoLayoutSubview];
+    }];
+}
+
 - (CGRect)jhRectFromString:(NSString *)frameStr
 {
+    NSString *saveFrameStr = frameStr;
     if ([frameStr hasPrefix:@"["] && [frameStr hasSuffix:@"]"] && frameStr.length > 3)
     {
         frameStr = [frameStr substringWithRange:NSMakeRange(1, frameStr.length - 2)];
         frameStr = [frameStr stringByReplacingOccurrencesOfString:@" " withString:@""];
         NSArray *xFourElementArr = [frameStr componentsSeparatedByString:@","];
         if (xFourElementArr.count != 4) return CGRectZero;
+        
+        NSString *frameString = objc_getAssociatedObject(self, "jhFrameString");
+        if (frameString.length == 0) {
+            //首次关联对象
+            objc_setAssociatedObject(self, "jhFrameString", saveFrameStr, OBJC_ASSOCIATION_COPY_NONATOMIC);
+        }else if (frameString.length > 0 && ![saveFrameStr isEqualToString:frameString]){
+            //更换关联对象
+            objc_setAssociatedObject(self, "jhFrameString", saveFrameStr, OBJC_ASSOCIATION_COPY_NONATOMIC);
+            
+            //发个通知，重新布局
+            [[NSNotificationCenter defaultCenter] postNotificationName:UIApplicationDidChangeStatusBarOrientationNotification object:nil];
+        }
         
         CGFloat X = [self jhFloatFromString:xFourElementArr[0]];
         CGFloat Y = [self jhFloatFromString:xFourElementArr[1]];
@@ -465,6 +516,10 @@ JH_addToView_m(UIView)
         return view.jh_max_x;
     }else if ([first isEqualToString:@"maxy"]){
         return view.jh_max_y;
+    }else if ([first isEqualToString:@"midx"]){
+        return CGRectGetMidX(view.frame);
+    }else if ([first isEqualToString:@"midy"]){
+        return CGRectGetMidY(view.frame);
     }else{
         return [self jhMultiple:first view:view];
     }
