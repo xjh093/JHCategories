@@ -86,7 +86,7 @@
             if ([frame hasPrefix:@"{"]) { \
                 self.frame = CGRectFromString(frame); \
             }else if ([frame hasPrefix:@"["]){ \
-                self.frame = [self.superview jhRectFromString:frame]; \
+                self.frame = [self jhRectFromString:frame]; \
             }else{ \
                 self.frame = CGRectZero; \
             } \
@@ -496,8 +496,11 @@ JH_addToView_m(UIView)
     
     if (![self isPureInt:second]) return 0.0;
     
-    UIView *view = [self viewWithTag:[second integerValue]];
-    if (view == nil) return 0.0;
+    UIView *view = [self.superview viewWithTag:[second integerValue]];
+    if (view == nil) {
+        view = [self viewWithTag:[second integerValue]];
+        if (view == nil) return 0.0;
+    }
     
     return [self jhFloatFromView:view withPreID:first];
 }
@@ -737,7 +740,7 @@ JH_addToView_m(UILabel)
             if ([frame hasPrefix:@"{"]) {
                 self.frame = CGRectFromString(frame);
             }else if ([frame hasPrefix:@"["]){
-                self.frame = [self.superview jhRectFromString:frame];
+                self.frame = [self jhRectFromString:frame];
             }else{
                 self.frame = CGRectZero;
             }
@@ -1044,7 +1047,7 @@ JH_addToView_m(UIButton)
             if ([frame hasPrefix:@"{"]) {
                 self.frame = CGRectFromString(frame);
             }else if ([frame hasPrefix:@"["]){
-                self.frame = [self.superview jhRectFromString:frame];
+                self.frame = [self jhRectFromString:frame];
             }else{
                 self.frame = CGRectZero;
             }
@@ -1287,7 +1290,7 @@ JH_addToView_m(UIScrollView)
             if ([contentSize hasPrefix:@"{"]) {
                 self.contentSize = CGSizeFromString(contentSize);
             }else if ([contentSize hasPrefix:@"["]){
-                self.contentSize = [self.superview jhSizeFromString:contentSize];
+                self.contentSize = [self jhSizeFromString:contentSize];
             }else{
                 self.frame = CGRectZero;
             }
