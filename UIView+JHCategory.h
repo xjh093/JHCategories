@@ -1,13 +1,17 @@
 //
 //  UIView+JHCategory.h
-//  JHKit
+//  OAdemo
 //
-//  Created by HaoCold on 16/8/18.
-//  Copyright © 2016年 HaoCold. All rights reserved.
+//  Created by Lightech on 14-10-16.
+//  Copyright (c) 2014年 Lightech. All rights reserved.
 //
 
 #import <UIKit/UIKit.h>
 
+
+//=============================================================================//
+//  define
+//=============================================================================//
 #ifdef DEBUG
 #if 0
 #define JHLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
@@ -18,11 +22,15 @@
 #define JHLog(...)
 #endif
 
+#define JHWeakSelf(type)    __weak typeof(type) weak##type = type
+#define JHStrongSelf(type)  __strong typeof(type) type = weak##type
+
 #define JHFRAME(frame) [NSValue valueWithCGRect:frame]
 #define JHSIZE(size)   [NSValue valueWithCGSize:size]
 
 #define JH_STRONG_P(jhclass,name) @property (strong, nonatomic) jhclass *name;
 #define JH_WEAKLY_P(jhclass,name) @property (weak,   nonatomic) jhclass *name;
+#define JH_COPYLY_P(jhclass,name) @property (copy,   nonatomic) jhclass *name;
 #define JH_ASSIGN_P(jhclass,name) @property (assign, nonatomic) jhclass  name;
 #define JH_BLOCKY_P(block,jhclass,name) @property (copy,nonatomic) void (^block)(jhclass name);
 
@@ -41,7 +49,88 @@
 #define JH_align_h(jhclass)       - (jhclass *(^)(id))jh_align;
 #define JH_alpha_h(jhclass)       - (jhclass *(^)(id))jh_alpha;
 
+#define JH_LAZY_MutableArray(jhclass) \
+- (NSMutableArray *)jhclass{ \
+    if (!_##jhclass) { \
+        _##jhclass = @[].mutableCopy; \
+    } \
+    return _##jhclass; \
+}
+
+#define JH_LAZY_MutableDictionary(jhclass) \
+- (NSMutableDictionary *)jhclass{ \
+    if (!_##jhclass) { \
+        _##jhclass = @{}.mutableCopy; \
+    } \
+    return _##jhclass; \
+}
+
+#define JH_LAZY_WEAK_UI(UIclass,jhclass,spview,jhdetail) \
+- (UIclass *)jhclass{ \
+    if (!_##jhclass) { \
+        if (!spview) return nil; \
+        UIclass *xView = [[UIclass alloc] init]; \
+        xView = jhdetail; \
+        [spview addSubview:xView]; \
+        _##jhclass = xView; \
+    } \
+    return _##jhclass; \
+}
+
+#define JH_LAZY_STRONG_UI(UIclass,jhclass,jhdetail) \
+- (UIclass *)jhclass{ \
+    if (!_##jhclass) { \
+        _##jhclass = jhdetail; \
+    } \
+    return _##jhclass; \
+}
+
+#define JH_LAZY_WEAK_BUTTON(jhclass) \
+- (UIButton *)jhclass{ \
+    if (!_##jhclass) { \
+        UIButton *xButton = [UIButton buttonWithType:1]; \
+        [self.view addSubview:xButton]; \
+        _button = xButton; \
+    } \
+    return _button; \
+}
+
+#define JH_LAZY_STRONG_BUTTON(jhclass) \
+- (UIButton *)button{ \
+    if (!_button) { \
+        _button = [UIButton buttonWithType:1]; \
+    } \
+    return _button; \
+}
+
+#define JH_CHECK_OBJECT_AND_METHOD(jhobject,jhmethod) \
+if ([jhobject isKindOfClass:[NSNull class]]) { \
+    if (DEBUG) { \
+        [[JHAlertView alertView] jhShow:[NSString stringWithFormat:@"%s [Line %d] 参数类型是null!",__PRETTY_FUNCTION__,__LINE__]]; \
+    } \
+    return; \
+} \
+if (![jhobject respondsToSelector:@selector(jhmethod)]) { \
+    if (DEBUG) { \
+        [[JHAlertView alertView] jhShow:[NSString stringWithFormat:@"%s [Line %d] 找不到方法!",__PRETTY_FUNCTION__,__LINE__]]; \
+    } \
+    return; \
+}
+
+#define JH_STRING(jhstring) \
+({ \
+    NSString *string = @""; \
+    if ([jhstring isKindOfClass:[NSString class]]) { \
+        string = [jhstring length] > 0 ? jhstring : @""; \
+    } \
+    string; \
+})
+
+//=============================================================================//
+//  UIView
+//=============================================================================//
 @interface UIView (JHCategory)
+
 @property (assign, nonatomic) CGFloat jh_x;                 /**< 原点x*/
 @property (assign, nonatomic) CGFloat jh_y;                 /**< 原点y*/
 @property (assign, nonatomic) CGFloat jh_w;                 /**< 宽度w*/
@@ -75,14 +164,26 @@ JH_addToView_h(UIView)
 - (void)jhUpdateLayout; /**< 更新布局*/
 @end
 
+
+//=============================================================================//
+//  UIColor
+//=============================================================================//
 @interface UIColor (JHCategory)
 + (UIColor *)jhColor:(id)object;
 @end
 
+
+//=============================================================================//
+//  UIFont
+//=============================================================================//
 @interface UIFont (JHCategory)
 + (UIFont *)jhFont:(id)object;
 @end
 
+
+//=============================================================================//
+//  UILabel
+//=============================================================================//
 @interface UILabel (JHCategory)
 
 JH_tag_h(UILabel)
@@ -104,8 +205,13 @@ JH_addToView_h(UILabel)
 
 - (UILabel *(^)(id))jh_lines;     /**< NSNumber */
 - (UILabel *(^)(id))jh_adjust;    /**< NSNumber @(YES),@(NO)*/
+- (void)jhLabelFrame:(id)frame text:(NSString *)text color:(id)color font:(id)font align:(CGFloat)align;
 @end
 
+
+//=============================================================================//
+//  UIImageView
+//=============================================================================//
 @interface UIImageView (JHCategory)
 
 JH_tag_h(UIImageView)
@@ -125,6 +231,10 @@ JH_addToView_h(UIImageView)
 
 @end
 
+
+//=============================================================================//
+//  UITextField
+//=============================================================================//
 @interface UITextField (JHCategory)
 
 JH_tag_h(UITextField)
@@ -157,6 +267,10 @@ JH_addToView_h(UITextField)
 
 @end
 
+
+//=============================================================================//
+//  UITextView
+//=============================================================================//
 @interface UITextView (JHCategory)
 
 JH_tag_h(UITextView)
@@ -179,6 +293,10 @@ JH_addToView_h(UITextView)
 
 @end
 
+
+//=============================================================================//
+//  UIButton
+//=============================================================================//
 @interface UIButton (JHCategory)
 
 JH_tag_h(UIButton)
@@ -209,7 +327,12 @@ JH_addToView_h(UIButton)
 - (UIButton *(^)(id))jh_tintColor;
 @end
 
+
+//=============================================================================//
+//  UITableView
+//=============================================================================//
 @interface UITableView (JHCategory)
++ (UITableView *)jhTableView:(NSString *)frameStr style:(NSInteger)style target:(id)target view:(UIView *)view addToView:(BOOL)flag; /**< style:plain-0,group-1.*/
 
 JH_tag_h(UITableView)
 JH_frame_h(UITableView)
@@ -227,6 +350,10 @@ JH_addToView_h(UITableView)
 
 @end
 
+
+//=============================================================================//
+//  UIScrollView
+//=============================================================================//
 @interface UIScrollView (JHCategory)
 
 JH_tag_h(UIScrollView)
@@ -247,10 +374,18 @@ JH_addToView_h(UIScrollView)
 
 @end
 
+
+//=============================================================================//
+//  UIActivityIndicatorView
+//=============================================================================//
 @interface UIActivityIndicatorView (JHCategory)
 + (UIActivityIndicatorView *)jhAIViewInsuperView:(UIView *)view showInfo:(NSString *)text;
 @end
 
+
+//=============================================================================//
+//  UIAlertAction
+//=============================================================================//
 typedef void(^jhAlertAction)();
 @interface UIAlertController (JHCategory)
 
@@ -258,12 +393,17 @@ typedef void(^jhAlertAction)();
 - (UIAlertController *(^)(id,jhAlertAction))jh_addNormalAction;
 - (UIAlertController *(^)(id,jhAlertAction))jh_addCancelAction;
 - (UIAlertController *(^)(id,jhAlertAction))jh_addDestructAction;
+- (UIAlertController *(^)(id))jh_addTextField;
 - (UIAlertController *(^)(id))jh_show;
 
 @end
 
 #define jhAlertCtrl(title,message,type)     jh_alertCtrl(title,message,type)
 
+
+//=============================================================================//
+//  UISwitch
+//=============================================================================//
 @interface UISwitch (JHCategory)
 
 JH_tag_h(UISwitch)
@@ -276,13 +416,15 @@ JH_cnRadius_h(UISwitch)
 JH_mtBounds_h(UISwitch)
 JH_addToView_h(UISwitch)
 
-- (UISwitch *(id))jh_tintColor;
-- (UISwitch *(id))jh_onTintColor;
-- (UISwitch *(id))jh_thTintColor;
-- (UISwitch *(id))jh_onImage;
-- (UISwitch *(id))jh_offImage;
+- (UISwitch *(^)(id))jh_tintColor;
+- (UISwitch *(^)(id))jh_onTintColor;
+- (UISwitch *(^)(id))jh_thTintColor;
+- (UISwitch *(^)(id))jh_onImage;
+- (UISwitch *(^)(id))jh_offImage;
 
 @end
 
 
-
+@interface JHCrashManager : NSObject
++ (void)jh_startCaughtException;
+@end
