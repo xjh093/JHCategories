@@ -342,9 +342,14 @@ JH_addToView_m(UIView)
 #pragma mark 更新布局
 - (void)jhUpdateLayout
 {
-    [UIView animateWithDuration:0.25 animations:^{
-        [self jhAutoLayoutSubview];
-    }];
+    BOOL jh_first_flag = objc_getAssociatedObject(self, "jhFirstFlag");
+    if (!jh_first_flag) {
+        objc_setAssociatedObject(self, "jhFirstFlag", @(YES), OBJC_ASSOCIATION_ASSIGN);
+    }else{
+        [UIView animateWithDuration:0.25 animations:^{
+            [self jhAutoLayoutSubview];
+        }];
+    }
 }
 
 #pragma mark 通过字符串转成frame
