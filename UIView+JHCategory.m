@@ -1,13 +1,18 @@
 //
 //  UIView+JHCategory.m
-//  JHKit
+//  OAdemo
 //
-//  Created by HaoCold on 16/8/18.
-//  Copyright © 2016年 HaoCold. All rights reserved.
+//  Created by Lightech on 14-10-16.
+//  Copyright (c) 2014年 Lightech. All rights reserved.
 //
-    
-#import "UIView+JHCategory.h"
 
+#import "UIView+JHCategory.h"
+#import <objc/runtime.h>
+
+
+//=============================================================================//
+//  define
+//=============================================================================//
 #define JH_bdColor_m(jhclass) \
 - (jhclass *(^)(id))jh_bdColor{ \
     JHLog(); \
@@ -179,6 +184,10 @@
     }; \
 }
 
+
+//=============================================================================//
+//  UIView
+//=============================================================================//
 @implementation UIView (JHCategory)
 
 - (void)setJh_x:(CGFloat)jh_x{
@@ -288,6 +297,7 @@ JH_addToView_m(UIView)
     };
 }
 
+#pragma mark 添加收回键盘点击事件
 - (void)jhAddTapEvent
 {
     UITapGestureRecognizer *xTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hideKeyboard)];
@@ -337,6 +347,7 @@ JH_addToView_m(UIView)
     }];
 }
 
+#pragma mark 通过字符串转成frame
 - (CGRect)jhRectFromString:(NSString *)frameStr
 {
     NSString *saveFrameStr = frameStr;
@@ -413,18 +424,7 @@ JH_addToView_m(UIView)
                 [subStr2 integerValue] != 0 ||
                 [subStr2 floatValue] > 0.01)
             {
-                CGFloat secondValue = 0.0;
-                NSString *firstStr = xArr[0];
-                if ([firstStr hasPrefix:@"x"] || [firstStr hasPrefix:@"maxx"]) {
-                    CGFloat W = [UIScreen mainScreen].bounds.size.width;
-                    secondValue = (W/375.0)*[subStr floatValue];
-                }else if ([firstStr hasPrefix:@"y"] || [firstStr hasPrefix:@"maxy"]){
-                    CGFloat H = [UIScreen mainScreen].bounds.size.height;
-                    secondValue = (H/667.0)*[subStr floatValue];
-                }else{
-                    secondValue = [subStr2 floatValue];
-                }
-                
+                CGFloat secondValue = [subStr2 floatValue];
                 if ([subStr1 isEqualToString:@"+"]) {
                     return firstValue + secondValue;
                 }else if ([subStr1 isEqualToString:@"-"]) {
@@ -470,7 +470,7 @@ JH_addToView_m(UIView)
     return 0.0;
 }
 
-//判断是否为整形
+#pragma mark 是否为整形
 - (BOOL)isPureInt:(NSString*)string
 {
     NSScanner *scan = [NSScanner scannerWithString:string];
@@ -478,7 +478,7 @@ JH_addToView_m(UIView)
     return[scan scanInt:&val] && [scan isAtEnd];
 }
 
-//判断是否为浮点形
+#pragma mark 是否为浮点形
 - (BOOL)isPureFloat:(NSString*)string
 {
     NSScanner *scan = [NSScanner scannerWithString:string];
@@ -564,6 +564,10 @@ JH_addToView_m(UIView)
 
 @end
 
+
+//=============================================================================//
+//  UIColor
+//=============================================================================//
 @implementation UIColor (JHCategory)
 + (UIColor *)jhColor:(id)object{
     //16进制字符串
@@ -628,6 +632,10 @@ JH_addToView_m(UIView)
 
 @end
 
+
+//=============================================================================//
+//  UIFont
+//=============================================================================//
 @implementation UIFont (JHCategory)
 + (UIFont *)jhFont:(id)object{
     //字符串 例如：17,s17,b17,i17
@@ -694,9 +702,12 @@ JH_addToView_m(UIView)
     return NO;
 }
 
-
 @end
 
+
+//=============================================================================//
+//  UILabel
+//=============================================================================//
 @implementation UILabel (JHCategory)
 
 + (UILabel *(^)())jh_label{
@@ -720,105 +731,6 @@ JH_cnRadius_m(UILabel)
 JH_mtBounds_m(UILabel)
 JH_addToView_m(UILabel)
 
-#if 0
-- (UILabel *(^)(id))jh_addToView{
-    JHLog();
-    return ^id(id view){
-        if ([view isKindOfClass:[UIView class]]) {
-            [view addSubview:self];
-        }
-        return self;
-    };
-}
-
-- (UILabel *(^)(id))jh_frame{
-    JHLog();
-    return ^id(id frame){
-        if ([frame isKindOfClass:[NSValue class]]) {
-            self.frame = [frame CGRectValue];
-        }else if ([frame isKindOfClass:[NSString class]]){
-            if ([frame hasPrefix:@"{"]) {
-                self.frame = CGRectFromString(frame);
-            }else if ([frame hasPrefix:@"["]){
-                self.frame = [self jhRectFromString:frame];
-            }else{
-                self.frame = CGRectZero;
-            }
-        }
-        return self;
-    };
-}
-
-- (UILabel *(^)(id))jh_bgColor{
-    JHLog();
-    return  ^id(id color){
-        if ([color isKindOfClass:[UIColor class]]) {
-            self.backgroundColor = color;
-        }else if ([color isKindOfClass:[NSString class]]){
-            self.backgroundColor = [UIColor jhColor:color];
-        }
-        return self;
-    };
-}
-
-- (UILabel *(^)(id))jh_tag{
-    JHLog();
-    return ^id(id tag){
-        if ([tag isKindOfClass:[NSNumber class]]) {
-            self.tag = [tag integerValue];
-        }
-        return self;
-    };
-}
-
-- (UILabel *(^)(id))jh_text{
-    JHLog();
-    return ^id(id text){
-        if ([text isKindOfClass:[NSString class]]) {
-            self.text = text;
-        }
-        return self;
-    };
-}
-
-- (UILabel *(^)(id))jh_color{
-    JHLog();
-    return ^id(id color){
-        if ([color isKindOfClass:[UIColor class]]) {
-            self.textColor = color;
-        }else if ([color isKindOfClass:[NSString class]]){
-            self.textColor = [UIColor jhColor:color];
-        }
-        return self;
-    };
-}
-
-- (UILabel *(^)(id))jh_font{
-    JHLog();
-    return ^id(id font){
-        if ([font isKindOfClass:[UIFont class]]) {
-            self.font = font;
-        }else if ([font isKindOfClass:[NSString class]]){
-            self.font = [UIFont jhFont:font];
-        }
-        return self;
-    };
-}
-
-- (UILabel *(^)(id))jh_align{
-    JHLog();
-    return ^id(id align){
-        if ([align isKindOfClass:[NSNumber class]]) {
-            self.textAlignment = [align integerValue];
-        }
-        return self;
-    };
-}
-
-#endif
-
-
-
 - (UILabel *(^)(id))jh_lines{
     JHLog();
     return ^id(id lines){
@@ -839,8 +751,28 @@ JH_addToView_m(UILabel)
     };
 }
 
+- (void)jhLabelFrame:(id)frame text:(NSString *)text color:(id)color font:(id)font align:(CGFloat)align
+{
+    self.jh_frame(({
+        NSString *frameString = @"";
+        if ([frame isKindOfClass:[NSString class]]) {
+            frameString = frame;
+        }else if ([frame isKindOfClass:[NSValue class]]){
+            frameString = NSStringFromCGRect([frame CGRectValue]);
+        }
+        frameString;
+    }))
+    .jh_text(text)
+    .jh_color([UIColor jhColor:color])
+    .jh_font([UIFont jhFont:font])
+    .jh_align(@(align));
+}
 @end
 
+
+//=============================================================================//
+//  UIImageView
+//=============================================================================//
 @implementation UIImageView (JHCategory)
 
 JH_tag_m(UIImageView)
@@ -874,6 +806,10 @@ JH_addToView_m(UIImageView)
 
 @end
 
+
+//=============================================================================//
+//  UITextField
+//=============================================================================//
 @implementation UITextField (JHCategory)
 
 JH_tag_m(UITextField)
@@ -976,10 +912,12 @@ JH_addToView_m(UITextField)
     };
 }
 
-
-
 @end
 
+
+//=============================================================================//
+//  UITextView
+//=============================================================================//
 @implementation UITextView (JHCategory)
 
 JH_tag_m(UITextView)
@@ -1006,6 +944,10 @@ JH_addToView_m(UITextView)
 
 @end
 
+
+//=============================================================================//
+//  UIButton
+//=============================================================================//
 @implementation UIButton (JHCategory)
 
 JH_tag_m(UIButton)
@@ -1027,68 +969,6 @@ JH_addToView_m(UIButton)
         return nil;
     };
 }
-
-#if 0
-- (UIButton *(^)(id))jh_addToView{
-    return ^id(id view){
-        if ([view isKindOfClass:[UIView class]]) {
-            [view addSubview:self];
-        }
-        return self;
-    };
-}
-
-- (UIButton *(^)(id))jh_frame{
-    JHLog();
-    return ^id(id frame){
-        if ([frame isKindOfClass:[NSValue class]]) {
-            self.frame = [frame CGRectValue];
-        }else if ([frame isKindOfClass:[NSString class]]){
-            if ([frame hasPrefix:@"{"]) {
-                self.frame = CGRectFromString(frame);
-            }else if ([frame hasPrefix:@"["]){
-                self.frame = [self jhRectFromString:frame];
-            }else{
-                self.frame = CGRectZero;
-            }
-        }
-        return self;
-    };
-}
-
-- (UIButton *(^)(id))jh_bgColor{
-    JHLog();
-    return  ^id(id color){
-        if ([color isKindOfClass:[UIColor class]]) {
-            self.backgroundColor = color;
-        }else if ([color isKindOfClass:[NSString class]]){
-            self.backgroundColor = [UIColor jhColor:color];
-        }
-        return self;
-    };
-}
-
-- (UIButton *(^)(id))jh_tag{
-    JHLog();
-    return ^id(id tag){
-        if ([tag isKindOfClass:[NSNumber class]]) {
-            self.tag = [tag integerValue];
-        }
-        return self;
-    };
-}
-
-- (UIButton *(^)(id))jh_radius{
-    JHLog();
-    return ^id(id radius){
-        if ([radius isKindOfClass:[NSNumber class]]) {
-            self.layer.cornerRadius = [radius floatValue];
-        }
-        return self;
-    };
-}
-
-#endif
 
 - (UIButton *(^)(id))jh_title{
     JHLog();
@@ -1236,7 +1116,27 @@ JH_addToView_m(UIButton)
 
 @end
 
+
+//=============================================================================//
+//  UITableView
+//=============================================================================//
 @implementation UITableView (JHCategory)
++ (UITableView *)jhTableView:(NSString *)frameStr style:(NSInteger)style target:(id)target view:(UIView *)view addToView:(BOOL)flag
+{
+    UITableView *xTableView = nil;
+    if (style == 0 || style == 1)
+        xTableView = [[UITableView alloc] initWithFrame:[view jhRectFromString:frameStr] style:style];
+    
+    xTableView.delegate = target;
+    xTableView.dataSource = target;
+    xTableView.tableFooterView = [[UIView alloc] init];
+    xTableView.showsVerticalScrollIndicator = NO;
+    xTableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+    
+    if (view && flag) [view addSubview:xTableView];
+    
+    return xTableView;
+}
 
 JH_tag_m(UITableView)
 JH_frame_m(UITableView)
@@ -1261,6 +1161,10 @@ JH_addToView_m(UITableView)
 
 @end
 
+
+//=============================================================================//
+//  UIScrollView
+//=============================================================================//
 @implementation UIScrollView (JHCategory)
 
 JH_tag_m(UIScrollView)
@@ -1290,7 +1194,7 @@ JH_addToView_m(UIScrollView)
             if ([contentSize hasPrefix:@"{"]) {
                 self.contentSize = CGSizeFromString(contentSize);
             }else if ([contentSize hasPrefix:@"["]){
-                self.contentSize = [self jhSizeFromString:contentSize];
+                self.contentSize = [self.superview jhSizeFromString:contentSize];
             }else{
                 self.frame = CGRectZero;
             }
@@ -1300,6 +1204,10 @@ JH_addToView_m(UIScrollView)
 }
 @end
 
+
+//=============================================================================//
+//  UIActivityIndicatorView
+//=============================================================================//
 @implementation UIActivityIndicatorView (JHCategory)
 + (UIActivityIndicatorView *)jhAIViewInsuperView:(UIView *)superView showInfo:(NSString *)text
 {
@@ -1325,14 +1233,15 @@ JH_addToView_m(UIScrollView)
     //高度不超过最大高度
     UIView *tView = nil;
     BOOL flag = NO;
-    if (height > [UIScreen mainScreen].bounds.size.height - 100) {
-        height = [UIScreen mainScreen].bounds.size.height - 100;
+    if (height > [UIScreen mainScreen].bounds.size.height - 150) {
+        height = [UIScreen mainScreen].bounds.size.height - 150;
         
         //超过时，添加scrollView
         CGRect frame = CGRectMake(0, 57, width, height - 57);
         UIScrollView *scrollView = [[UIScrollView alloc] init];
         scrollView.jh_addToView(xAIView).jh_frame(JHFRAME(frame)).jh_contentSize(JHSIZE(CGSizeMake(width, size.height)));
         flag = YES;
+        tView = scrollView;
     }else{
         tView = xAIView;
     }
@@ -1384,6 +1293,10 @@ JH_addToView_m(UIScrollView)
 }
 @end
 
+
+//=============================================================================//
+//  UIAlertController
+//=============================================================================//
 @implementation UIAlertController (JHCategory)
 
 + (UIAlertController *(^)(id,id,id))jh_alertCtrl{
@@ -1399,7 +1312,9 @@ JH_addToView_m(UIScrollView)
 - (UIAlertController *(^)(id,jhAlertAction))jh_addNormalAction{
     return ^id(id title,jhAlertAction jhBlock){
         UIAlertAction *jhAction = [UIAlertAction actionWithTitle:title style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-            jhBlock();
+            if (jhBlock) {
+                jhBlock();
+            }
         }];
         [self addAction:jhAction];
         return self;
@@ -1409,7 +1324,9 @@ JH_addToView_m(UIScrollView)
 - (UIAlertController *(^)(id,jhAlertAction))jh_addCancelAction{
     return ^id(id title,jhAlertAction jhBlock){
         UIAlertAction *jhAction = [UIAlertAction actionWithTitle:title style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
-            jhBlock();
+            if (jhBlock) {
+                jhBlock();
+            }
         }];
         [self addAction:jhAction];
         return self;
@@ -1419,9 +1336,22 @@ JH_addToView_m(UIScrollView)
 - (UIAlertController *(^)(id,jhAlertAction))jh_addDestructAction{
     return ^id(id title,jhAlertAction jhBlock){
         UIAlertAction *jhAction = [UIAlertAction actionWithTitle:title style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
-            jhBlock();
+            if (jhBlock) {
+                jhBlock();
+            }
         }];
         [self addAction:jhAction];
+        return self;
+    };
+}
+
+- (UIAlertController *(^)(id))jh_addTextField{
+    return ^id(id title){
+        [self addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
+            textField.placeholder = title;
+            textField.leftViewMode = UITextFieldViewModeAlways;
+            textField.leftView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 8, 8)];
+        }];
         return self;
     };
 }
@@ -1438,6 +1368,9 @@ JH_addToView_m(UIScrollView)
 @end
 
 
+//=============================================================================//
+//  UISwitch
+//=============================================================================//
 @implementation UISwitch (JHCategory)
 
 JH_tag_m(UISwitch)
@@ -1450,7 +1383,7 @@ JH_cnRadius_m(UISwitch)
 JH_mtBounds_m(UISwitch)
 JH_addToView_m(UISwitch)
 
-- (UISwitch *(id))jh_tintColor{
+- (UISwitch *(^)(id))jh_tintColor{
     JHLog();
     return ^id(id tintColor){
         if ([tintColor isKindOfClass:[UIColor class]]) {
@@ -1462,7 +1395,7 @@ JH_addToView_m(UISwitch)
     };
 }
 
-- (UISwitch *(id))jh_onTintColor{
+- (UISwitch *(^)(id))jh_onTintColor{
     JHLog();
     return ^id(id onTintColor){
         if ([onTintColor isKindOfClass:[UIColor class]]) {
@@ -1473,7 +1406,7 @@ JH_addToView_m(UISwitch)
         return self;
     };
 }
-- (UISwitch *(id))jh_thTintColor{
+- (UISwitch *(^)(id))jh_thTintColor{
     JHLog();
     return ^id(id thTintColor){
         if ([thTintColor isKindOfClass:[UIColor class]]) {
@@ -1484,7 +1417,7 @@ JH_addToView_m(UISwitch)
         return self;
     };
 }
-- (UISwitch *(id))jh_onImage{
+- (UISwitch *(^)(id))jh_onImage{
     JHLog();
     return ^id(id onImage){
         if ([onImage isKindOfClass:[NSString class]]) {
@@ -1495,7 +1428,7 @@ JH_addToView_m(UISwitch)
         return self;
     };
 }
-- (UISwitch *(id))jh_offImage{
+- (UISwitch *(^)(id))jh_offImage{
     JHLog();
     return ^id(id offImage){
         if ([offImage isKindOfClass:[NSString class]]) {
@@ -1510,3 +1443,30 @@ JH_addToView_m(UISwitch)
 @end
 
 
+//=============================================================================//
+//  Other
+//=============================================================================//
+@implementation JHCrashManager
+
++ (void)jh_startCaughtException
+{
+    NSSetUncaughtExceptionHandler(&uncaughtExceptionHandler);
+}
+
+void uncaughtExceptionHandler(NSException *exception)
+{
+#if DEBUG
+    NSLog(@"Crash!!!-_-!  here is the info:\n name:%@\n reason:%@\n callStack:%@",exception.name,exception.reason,exception.callStackSymbols);
+#elif 0
+    NSDictionary *dic = @{@"name":exception.name,
+                          @"resaon":exception.reason,
+                          @"callStackSysbols":exception.callStackSymbols};
+    NSData *data = [NSJSONSerialization dataWithJSONObject:dic options:NSJSONWritingPrettyPrinted error:nil];
+    //[data writeToFile:@"/Users/haocold/Desktop/13726796592.txt" atomically:NO]; //用字典写入文件，会写成plist
+    
+    NSString *str = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    [str writeToFile:@"/Users/haocold/Desktop/CrsahLog.txt" atomically:NO encoding:NSUTF8StringEncoding error:nil];
+#endif
+}
+
+@end
