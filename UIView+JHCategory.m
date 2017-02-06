@@ -308,12 +308,39 @@ JH_addToView_m(UIView)
 {
     [self endEditing:YES];
 }
-
 #pragma mark 自动布局
 - (void)jhAutoLayout
 {
     //屏幕旋转通知
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(jhAutoLayoutSubview) name:UIApplicationDidChangeStatusBarOrientationNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(jhAutoLayoutSubview)
+                                                 name:UIApplicationDidChangeStatusBarOrientationNotification
+                                               object:nil];
+    
+    //view frame 更改通知
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(jhViewFrameChanged)
+                                                 name:@"jhViewFrameChange"
+                                               object:nil];
+    
+}
+
+#pragma mark 当前window内view frame 有改动
+- (void)jhViewFrameChanged
+{
+    if (self.subviews.count > 0) { //有子view
+        for (UIView *view in self.subviews) {
+            JHLog(@"view tag:%@ - %p",@(view.tag),view);
+            NSString *frameString = objc_getAssociatedObject(view, "jhFrameString");
+            if (frameString.length > 0) {
+                CGRect frame = [view jhRectFromString:frameString];
+                if(!CGRectEqualToRect(CGRectZero, frame)) {
+                    view.frame = frame;
+                    [view jhViewFrameChanged];
+                }
+            }
+        }
+    }
 }
 
 #pragma mark 布局子view
@@ -321,12 +348,23 @@ JH_addToView_m(UIView)
 {
     //当前视图不在窗口
     if (!self.window) {
-        //NSLog(@"1");
+        JHLog(@"1");
+        
+        /**< 设置标志，view需要更新*/
+        NSString *jh_rotate = objc_getAssociatedObject(self, "jhScreenRotateFlag");
+        if ([jh_rotate isEqualToString:@"YES"]) {
+            objc_setAssociatedObject(self, "jhScreenRotateFlag", @"NO", OBJC_ASSOCIATION_COPY_NONATOMIC);
+            JHLog(@"flag:NO");
+        }else{
+            objc_setAssociatedObject(self, "jhScreenRotateFlag", @"YES", OBJC_ASSOCIATION_COPY_NONATOMIC);
+            JHLog(@"flag:YES");
+        }
+        
         return;
     }
     if (self.subviews.count > 0) { //有子view
         for (UIView *view in self.subviews) {
-            //NSLog(@"view tag:%@ - %p",@(view.tag),view);
+            JHLog(@"view tag:%@ - %p",@(view.tag),view);
             NSString *frameString = objc_getAssociatedObject(view, "jhFrameString");
             if (frameString.length > 0) {
                 CGRect frame = [view jhRectFromString:frameString];
@@ -342,13 +380,21 @@ JH_addToView_m(UIView)
 #pragma mark 更新布局
 - (void)jhUpdateLayout
 {
+    /**< 控制器的view第一次加载的时候，就不用更新了*/
     BOOL jh_first_flag = objc_getAssociatedObject(self, "jhFirstFlag");
     if (!jh_first_flag) {
         objc_setAssociatedObject(self, "jhFirstFlag", @(YES), OBJC_ASSOCIATION_ASSIGN);
     }else{
-        [UIView animateWithDuration:0.25 animations:^{
-            [self jhAutoLayoutSubview];
-        }];
+        
+        /**< 屏幕有旋转过，才进行更新*/
+        NSString *jh_rotate = objc_getAssociatedObject(self, "jhScreenRotateFlag");
+        if ([jh_rotate isEqualToString:@"YES"]) {
+            objc_setAssociatedObject(self, "jhScreenRotateFlag", @"NO", OBJC_ASSOCIATION_COPY_NONATOMIC);
+            [UIView animateWithDuration:0.25 animations:^{
+                [self jhAutoLayoutSubview];
+                JHLog(@"jhUpdateLayout");
+            }];
+        }
     }
 }
 
