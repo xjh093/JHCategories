@@ -1,4 +1,4 @@
-# UIView-JHCategory
+# JHCategories
 
 * 1.Set view's Frame from a string.
 * 2.A quick method to set view's Property.
