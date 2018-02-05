@@ -207,8 +207,8 @@ JH_addToView_m(UIButton)
     return ^id(id offsetX){
         CGFloat X = 3;
         X = [offsetX floatValue]>=0?[offsetX floatValue]:3;
-        [self setImageEdgeInsets:UIEdgeInsetsMake(0,0,0,-self.titleLabel.intrinsicContentSize.width-self.imageView.frame.size.width-X)];
-        [self setTitleEdgeInsets:UIEdgeInsetsMake(0,-self.titleLabel.intrinsicContentSize.width-self.imageView.frame.size.width-X,0,0)];
+        [self setImageEdgeInsets:UIEdgeInsetsMake(0,0,0,-self.titleLabel.intrinsicContentSize.width*2-X)];
+        [self setTitleEdgeInsets:UIEdgeInsetsMake(0,-self.imageView.frame.size.width*2-X,0,0)];
         return self;
     };
 }
