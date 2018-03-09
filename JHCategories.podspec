@@ -1,7 +1,7 @@
 
 Pod::Spec.new do |s|
   s.name         = 'JHCategories'
-  s.summary      = '==SUMMARY=='
+  s.summary      = 'A chainable categories for UIView'
   s.version      = '1.0.0'
   s.license      = { :type => 'MIT'}
   s.authors      = { 'Haocold' => 'xjh093@126.com' }
