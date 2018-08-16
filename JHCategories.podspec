@@ -2,12 +2,12 @@
 Pod::Spec.new do |s|
   s.name         = 'JHCategories'
   s.summary      = 'A chainable categories for UIView'
-  s.version      = '1.0.0'
+  s.version      = '1.0.1'
   s.license      = { :type => 'MIT'}
   s.authors      = { 'Haocold' => 'xjh093@126.com' }
   s.homepage     = 'https://github.com/xjh093/JHCategories-Chainable'
 
-  s.platform     = :ios
+  s.ios.deployment_target = '8.0'
 
   s.source       = { :git => 'https://github.com/xjh093/JHCategories-Chainable.git', :tag => "1.0.0"}
   
