@@ -86,7 +86,7 @@ JH_addToView_m(UILabel)
         [self sizeToFit];
         
         if ([maxHeight floatValue] > 0 &&
-            self.frame.size.width > [maxHeight floatValue]) {
+            self.frame.size.height > [maxHeight floatValue]) {
             frame.size.height = [maxHeight floatValue];
         }else{
             frame.size.height = self.frame.size.height;
