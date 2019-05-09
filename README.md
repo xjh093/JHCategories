@@ -3,6 +3,11 @@
 * 1.Set view's Frame from a string.
 * 2.A quick method to set view's Property.
 
+---
+
+# Okidoki
+ [Okidoki](https://github.com/xjh093/Okidoki) is more friendly🤝.
+
 ---------------------------------------------------------------
 ## 1.Set view's Frame from a string.
 ### example0: the beginning.
