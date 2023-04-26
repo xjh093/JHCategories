@@ -21,6 +21,12 @@ typedef void(^jhAlertAction)();
 - (UIAlertController *(^)(id))jh_addTextField;
 - (UIAlertController *(^)(id))jh_show;
 
+/// 只展示图片的
++ (instancetype)alertControllerWithTitle:(nullable NSString *)title image:(NSString *)image imageSize:(CGSize)imageSize preferredStyle:(UIAlertControllerStyle)preferredStyle;
+
+/// 展示自定义视图
++ (instancetype)alertControllerWithTitle:(nullable NSString *)title customView:(UIView *)customView viewSize:(CGSize)viewSize preferredStyle:(UIAlertControllerStyle)preferredStyle;
+
 @end
 
 /**<
