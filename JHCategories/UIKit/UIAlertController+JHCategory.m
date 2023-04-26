@@ -104,7 +104,7 @@
     [customView.centerXAnchor constraintEqualToAnchor:alertCtrl.view.centerXAnchor].active = YES;
     [customView.centerYAnchor constraintEqualToAnchor:alertCtrl.view.centerYAnchor].active = YES;
     [customView.widthAnchor constraintEqualToConstant:viewSize.width].active = YES;
-    [customView.heightAnchor constraintEqualToConstant:viewSize.width].active = YES;
+    [customView.heightAnchor constraintEqualToConstant:viewSize.height].active = YES;
     
     return alertCtrl;
 }
